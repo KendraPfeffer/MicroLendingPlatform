@@ -5,7 +5,7 @@ import './App.css'
 // REAL CONTRACT ADDRESS - Updated with localhost deployment for testing
 const CONTRACT_ADDRESS = "0x94aB9f99C2450e8395Ee58EA37990bb24eb456FE"
 const SEPOLIA_CHAIN_ID = "0xaa36a7" // 11155111 in decimal
-const SEPOLIA_RPC_URL = "https://sepolia.infura.io/v3/"
+const LOCALHOST_CHAIN_ID = "0x7a69" // 31337 in decimal
 
 // Complete Contract ABI for MicroLendingPlatform contract
 const CONTRACT_ABI = [
@@ -810,6 +810,7 @@ function App() {
 
   // Check if user is on Sepolia network
   const isOnSepolia = networkId === SEPOLIA_CHAIN_ID
+  const isOnLocalhost = networkId === LOCALHOST_CHAIN_ID
 
   return (
     <div className="app">
