@@ -241,8 +241,8 @@ function App() {
       setAccount(accounts[0])
       setIsConnected(true)
 
-      // Initialize contract - 初始化合约实例
-      // 使用 web3Signer 创建合约实例，这样后续调用合约方法时会自动触发 MetaMask 弹窗
+      // Initialize contract instance
+      // Using web3Signer to create contract instance, this will automatically trigger MetaMask popup for subsequent contract method calls
       const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, web3Signer)
       setContract(contractInstance)
 
@@ -472,25 +472,25 @@ function App() {
   }
 
   /**
-   * MetaMask 真实交易核心实现原理
+   * MetaMask Real Transaction Core Implementation
    * 
-   * 合约交互流程：
-   * 用户点击按钮 → 调用合约方法 → ethers.js 发送交易 → MetaMask 弹窗确认 → 区块链执行
+   * Contract Interaction Flow:
+   * User clicks button → Call contract method → ethers.js sends transaction → MetaMask popup confirmation → Blockchain execution
    * 
-   * 触发原理：
-   * 1. 当调用时，ethers.js 会构造交易
-   * 2. 由于合约实例使用了 signer，ethers.js 知道需要用户签名
-   * 3. 这会自动触发 MetaMask 的交易确认弹窗
-   * 4. 用户确认后，交易被发送到 Sepolia 测试网
-   * 5. tx.wait() 等待交易被挖矿确认
+   * Trigger Mechanism:
+   * 1. When called, ethers.js constructs the transaction
+   * 2. Since contract instance uses signer, ethers.js knows user signature is needed
+   * 3. This automatically triggers MetaMask transaction confirmation popup
+   * 4. After user confirmation, transaction is sent to Sepolia testnet
+   * 5. tx.wait() waits for transaction to be mined and confirmed
    * 
-   * 状态管理：
-   * - 显示加载状态
-   * - 更新用户界面提示
-   * - 等待区块链确认
-   * - 刷新页面状态
+   * State Management:
+   * - Display loading status
+   * - Update user interface hints
+   * - Wait for blockchain confirmation
+   * - Refresh page state
    * 
-   * 通过 ethers.js 与智能合约交互，MetaMask 作为钱包提供商自动处理交易签名和发送。
+   * Through ethers.js interaction with smart contracts, MetaMask as wallet provider automatically handles transaction signing and sending.
    */
   const executeTransaction = async (
     contractMethod: any, 
@@ -509,7 +509,7 @@ function App() {
     try {
       setLoading(true)
       
-      // Step 1: Estimate gas - 估算 gas 费用
+      // Step 1: Estimate gas fees
       setTxStatus({
         status: 'pending',
         message: 'Estimating gas fees...'
@@ -517,7 +517,7 @@ function App() {
 
       await estimateGas(contractMethod, ...args, value > 0 ? { value } : {})
       
-      // Step 2: Prepare transaction - 准备交易
+      // Step 2: Prepare transaction
       setTxStatus({
         status: 'pending',
         message: 'Preparing transaction... Please confirm in MetaMask'
@@ -528,8 +528,8 @@ function App() {
         txOptions.value = value
       }
 
-      // Step 3: Send transaction - 发送交易 (MetaMask 自动弹出确认对话框)
-      // ethers.js 使用 signer 会自动触发 MetaMask 交易确认弹窗
+      // Step 3: Send transaction (MetaMask will automatically show confirmation dialog)
+      // ethers.js using signer will automatically trigger MetaMask transaction confirmation popup
       const tx = await contractMethod(...args, txOptions)
       
       setTxStatus({
@@ -538,11 +538,11 @@ function App() {
         hash: tx.hash
       })
 
-      // Step 4: Wait for transaction confirmation - 等待区块链确认
-      // tx.wait() 会等待交易被挖矿并确认
+      // Step 4: Wait for transaction confirmation from blockchain
+      // tx.wait() will wait for transaction to be mined and confirmed
       const receipt = await tx.wait()
       
-      // Step 5: Transaction confirmed - 交易确认完成
+      // Step 5: Transaction confirmed successfully
       const gasUsed = receipt.gasUsed.toString()
       const effectiveGasPrice = receipt.gasPrice?.toString() || '0'
       
@@ -554,10 +554,10 @@ function App() {
         gasPrice: ethers.formatUnits(effectiveGasPrice, 'gwei')
       })
 
-      // Refresh user data after successful transaction - 刷新页面状态
+      // Refresh user data after successful transaction
       await loadUserData(account)
       
-      // Update user balance - 更新用户余额
+      // Update user balance
       if (provider) {
         const balance = await provider.getBalance(account)
         setUserBalance(ethers.formatEther(balance))
@@ -591,7 +591,7 @@ function App() {
     }
   }
 
-  // Register as borrower - 点击后会触发 MetaMask 弹窗
+  // Register as borrower - clicking will trigger MetaMask popup
   const registerBorrower = async () => {
     if (!creditScore) {
       setTxStatus({
@@ -622,7 +622,7 @@ function App() {
     setMakePublic(false)
   }
 
-  // Request a loan - 点击后会触发 MetaMask 弹窗
+  // Request a loan - clicking will trigger MetaMask popup
   const requestLoan = async () => {
     if (!loanAmount || !interestRate || !loanDuration) {
       setTxStatus({
@@ -670,7 +670,7 @@ function App() {
     setLoanDuration('')
   }
 
-  // Fund a loan - 点击后会触发 MetaMask 弹窗
+  // Fund a loan - clicking will trigger MetaMask popup
   const fundLoan = async () => {
     if (!loanIdToFund || !fundingAmount) {
       setTxStatus({
@@ -710,7 +710,7 @@ function App() {
     setFundingAmount('')
   }
 
-  // Repay a loan - 点击后会触发 MetaMask 弹窗
+  // Repay a loan - clicking will trigger MetaMask popup
   const repayLoan = async () => {
     if (!loanIdToRepay || !repaymentAmount) {
       setTxStatus({
@@ -808,27 +808,28 @@ function App() {
     return timestamp > 0 ? new Date(timestamp * 1000).toLocaleDateString() : 'N/A'
   }
 
-  // Check if user is on Sepolia network
+  // Check if user is on supported networks
   const isOnSepolia = networkId === SEPOLIA_CHAIN_ID
   const isOnLocalhost = networkId === LOCALHOST_CHAIN_ID
+  const isOnSupportedNetwork = isOnSepolia || isOnLocalhost
 
   return (
     <div className="app">
       <div className="container">
         <div className="app-header">
           <div className="logo">🔒</div>
-          <h1 className="title">隐私小额贷款</h1>
-          <p className="subtitle">基于区块链技术的机密P2P借贷平台 - 保护您的隐私，安全便捷借贷</p>
+          <h1 className="title">Privacy Micro-Lending</h1>
+          <p className="subtitle">Secure P2P micro-lending platform powered by blockchain technology - Protecting your privacy with safe and convenient lending</p>
         </div>
 
         <div className="blockchain-info">
-          <p><strong>🔐 真实区块链应用</strong></p>
-          <p>运行在本地测试网络 - 需要MetaMask钱包连接</p>
+          <p><strong>🔐 Real Blockchain Application</strong></p>
+          <p>Running on Sepolia testnet - Requires MetaMask wallet connection</p>
           {isConnected && (
             <div style={{ marginTop: '10px' }}>
-              <p><strong>网络:</strong> {isOnLocalhost ? '✅ 本地测试网' : '❌ 网络错误'}</p>
-              <p><strong>余额:</strong> {userBalance} ETH</p>
-              <p><strong>合约:</strong> {CONTRACT_ADDRESS.slice(0, 8)}...{CONTRACT_ADDRESS.slice(-6)}</p>
+              <p><strong>Network:</strong> {isOnSepolia ? '✅ Sepolia Testnet' : isOnLocalhost ? '✅ Localhost Network' : '❌ Wrong Network'}</p>
+              <p><strong>Balance:</strong> {userBalance} ETH</p>
+              <p><strong>Contract:</strong> {CONTRACT_ADDRESS.slice(0, 8)}...{CONTRACT_ADDRESS.slice(-6)}</p>
             </div>
           )}
         </div>
@@ -857,9 +858,9 @@ function App() {
           </div>
         )}
 
-        {!isOnSepolia && isConnected && (
+        {!isOnSupportedNetwork && isConnected && (
           <div className="message error">
-            <p>Please switch to Sepolia testnet to use this DApp.</p>
+            <p>Please switch to Sepolia testnet or localhost network to use this DApp.</p>
             <button 
               className="button" 
               onClick={switchToSepolia}
@@ -949,7 +950,7 @@ function App() {
               </div>
             </div>
 
-            {!isRegistered && isOnSepolia && (
+            {!isRegistered && isOnSupportedNetwork && (
               <div className="card">
                 <h3>Register as Borrower</h3>
                 <p>Register your encrypted credit score on the blockchain to start borrowing.</p>
@@ -982,7 +983,7 @@ function App() {
                   <button 
                     className="button secondary" 
                     onClick={registerBorrower} 
-                    disabled={loading || !creditScore || !isOnLocalhost}
+                    disabled={loading || !creditScore || !isOnSupportedNetwork}
                   >
                     {loading ? 'Registering...' : 'Register as Borrower'}
                   </button>
@@ -990,7 +991,7 @@ function App() {
               </div>
             )}
 
-            {isRegistered && isOnSepolia && (
+            {isRegistered && isOnSupportedNetwork && (
               <div className="card">
                 <h3>Request Loan</h3>
                 <p>Submit a loan request with encrypted terms to the blockchain.</p>
@@ -1045,7 +1046,7 @@ function App() {
                   <button 
                     className="button" 
                     onClick={requestLoan} 
-                    disabled={loading || !loanAmount || !interestRate || !loanDuration || !isOnLocalhost}
+                    disabled={loading || !loanAmount || !interestRate || !loanDuration || !isOnSupportedNetwork}
                   >
                     {loading ? 'Requesting...' : 'Request Loan'}
                   </button>
@@ -1053,7 +1054,7 @@ function App() {
               </div>
             )}
 
-            {isOnSepolia && (
+            {isOnSupportedNetwork && (
               <div className="card">
                 <h3>Fund a Loan</h3>
                 <p>Provide funding to borrowers and earn interest on the blockchain.</p>
@@ -1085,7 +1086,7 @@ function App() {
                   <button 
                     className="button accent" 
                     onClick={fundLoan}
-                    disabled={loading || !loanIdToFund || !fundingAmount || !isOnLocalhost || parseFloat(userBalance) < parseFloat(fundingAmount || '0')}
+                    disabled={loading || !loanIdToFund || !fundingAmount || !isOnSupportedNetwork || parseFloat(userBalance) < parseFloat(fundingAmount || '0')}
                   >
                     {loading ? 'Funding...' : 'Fund Loan'}
                   </button>
@@ -1093,7 +1094,7 @@ function App() {
               </div>
             )}
 
-            {isRegistered && isOnSepolia && (
+            {isRegistered && isOnSupportedNetwork && (
               <div className="card">
                 <h3>Repay Loan</h3>
                 <p>Repay your loan with interest to maintain good credit standing.</p>
@@ -1125,7 +1126,7 @@ function App() {
                   <button 
                     className="button warning" 
                     onClick={repayLoan}
-                    disabled={loading || !loanIdToRepay || !repaymentAmount || !isOnLocalhost || parseFloat(userBalance) < parseFloat(repaymentAmount || '0')}
+                    disabled={loading || !loanIdToRepay || !repaymentAmount || !isOnSupportedNetwork || parseFloat(userBalance) < parseFloat(repaymentAmount || '0')}
                   >
                     {loading ? 'Repaying...' : 'Repay Loan'}
                   </button>
@@ -1180,7 +1181,7 @@ function App() {
                           className="button accent" 
                           onClick={() => quickFund(loan.id)}
                           style={{ padding: '5px 10px', fontSize: '0.8rem' }}
-                          disabled={loading || !isOnLocalhost}
+                          disabled={loading || !isOnSupportedNetwork}
                         >
                           Quick Fund
                         </button>
